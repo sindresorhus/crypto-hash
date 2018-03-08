@@ -39,9 +39,9 @@ const {sha256} = require('crypto-hash');
 ### sha384(input, [options])
 ### sha512(input, [options])
 
-Returns a promise for a hex string.
+Returns a `Promise<string>` with a hex-encoded hash.
 
-*Note that even though it returns a promise, [in Node.js, the operation is synchronous](https://github.com/nodejs/node/issues/678).*
+*Note that even though it returns a promise, [in Node.js, the operation is synchronous 💩](https://github.com/nodejs/node/issues/678).*
 
 #### input
 
