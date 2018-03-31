@@ -43,6 +43,8 @@ Returns a `Promise<string>` with a hex-encoded hash.
 
 *Note that even though it returns a promise, [in Node.js, the operation is synchronous 💩](https://github.com/nodejs/node/issues/678).*
 
+[SHA-1 is insecure](https://stackoverflow.com/a/38045085/64949) and should not be used for anything sensitive.
+
 #### input
 
 Type: `string` [`ArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) [`ArrayBufferView`](https://developer.mozilla.org/en-US/docs/Web/API/ArrayBufferView)
