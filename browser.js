@@ -1,6 +1,23 @@
 /* eslint-env browser */
 'use strict';
 
+// Ponyfill for `globalThis`
+const _globalThis = (() => {
+	if (typeof self !== 'undefined') {
+		return self;
+	}
+
+	/* istanbul ignore next */
+	if (typeof window !== 'undefined') {
+		return window;
+	}
+
+	/* istanbul ignore next */
+	if (typeof global !== 'undefined') {
+		return global;
+	}
+})();
+
 const bufferToHex = buffer => {
 	const view = new DataView(buffer);
 
@@ -14,7 +31,7 @@ const bufferToHex = buffer => {
 
 const create = algorithm => async (buffer, options) => {
 	if (typeof buffer === 'string') {
-		buffer = new window.TextEncoder().encode(buffer);
+		buffer = new _globalThis.TextEncoder().encode(buffer);
 	}
 
 	options = {
@@ -22,7 +39,7 @@ const create = algorithm => async (buffer, options) => {
 		...options
 	};
 
-	const hash = await window.crypto.subtle.digest(algorithm, buffer);
+	const hash = await _globalThis.crypto.subtle.digest(algorithm, buffer);
 
 	return options.outputFormat === 'hex' ? bufferToHex(hash) : hash;
 };
