@@ -1,10 +1,11 @@
 'use strict';
 const crypto = require('crypto');
 
-const create = algorithm => async (buffer, options) => {
-	options = Object.assign({
-		outputFormat: 'hex'
-	}, options);
+const create = algorithm => async (buffer, options) => { // eslint-disable-line require-await
+	options = {
+		outputFormat: 'hex',
+		...options
+	};
 
 	const hash = crypto.createHash(algorithm);
 	hash.update(buffer, typeof buffer === 'string' ? 'utf8' : undefined);

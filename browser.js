@@ -17,9 +17,10 @@ const create = algorithm => async (buffer, options) => {
 		buffer = new window.TextEncoder().encode(buffer);
 	}
 
-	options = Object.assign({
-		outputFormat: 'hex'
-	}, options);
+	options = {
+		outputFormat: 'hex',
+		...options
+	};
 
 	const hash = await window.crypto.subtle.digest(algorithm, buffer);
 
