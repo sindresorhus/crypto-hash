@@ -1,7 +1,7 @@
 'use strict';
 const crypto = require('crypto');
 
-const create = algorithm => async (buffer, options) => { // eslint-disable-line require-await
+const create = algorithm => async (buffer, options) => {
 	options = {
 		outputFormat: 'hex',
 		...options
