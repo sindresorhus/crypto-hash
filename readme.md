@@ -34,10 +34,17 @@ const {sha256} = require('crypto-hash');
 
 ## API
 
+### ripemd160(input, [options])
+### blake32s256(input, [options])
+### blake32b512(input, [options])
+### md4(input, [options])
+### md5(input, [options])
 ### sha1(input, [options])
+### sha224(input, [options])
 ### sha256(input, [options])
 ### sha384(input, [options])
 ### sha512(input, [options])
+### whirlpool(input, [options])
 
 Returns a `Promise<string>` with a hex-encoded hash.
 
