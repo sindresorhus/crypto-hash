@@ -13,10 +13,11 @@
 		"node": ">=8"
 	},
 	"scripts": {
-		"test": "xo && ava test.js && karmatic test-browser.js"
+		"test": "xo && ava test.js && karmatic test-browser.js && tsd"
 	},
 	"files": [
 		"index.js",
+		"index.d.ts",
 		"browser.js"
 	],
 	"keywords": [
@@ -33,11 +34,12 @@
 		"browser"
 	],
 	"devDependencies": {
-		"@sindresorhus/is": "^0.13.0",
-		"ava": "^0.25.0",
+		"@sindresorhus/is": "^0.15.0",
+		"ava": "^1.4.1",
 		"hash.js": "^1.1.5",
-		"karmatic": "1.0.6",
-		"xo": "^0.23.0"
+		"karmatic": "1.0.7",
+		"tsd": "^0.7.2",
+		"xo": "^0.24.0"
 	},
 	"browser": "browser.js"
 }
