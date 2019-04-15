@@ -1,21 +1,36 @@
 'use strict';
-const crypto = require('crypto');
+const {Worker} = require('worker_threads');
 
-const create = algorithm => async (buffer, options) => {
+const create = algorithm => (buffer, options) => new Promise((resolve, reject) => {
 	options = {
 		outputFormat: 'hex',
 		...options
 	};
 
-	const hash = crypto.createHash(algorithm);
-	hash.update(buffer, typeof buffer === 'string' ? 'utf8' : undefined);
-
-	if (options.outputFormat === 'hex') {
-		return hash.digest('hex');
+	let arrayBuf;
+	if (typeof buffer === 'string') {
+		let buf = Buffer.from(buffer, 'utf8');
+		if(buf.byteOffset === 0 && buf.buffer.byteLength === buf.length) {
+			arrayBuf = buf.Buffer;
+		} else {
+			arrayBuf = new ArrayBuffer(buf.length);
+			buf.copy(Buffer.from(arrayBuf));
+		}
+	} else {
+		arrayBuf = buffer.buffer.slice(0);
 	}
 
-	return hash.digest().buffer;
-};
+	const worker = new Worker('./thread.js');
+	worker.on('message', arrayBuf => {
+		if(options.outputFormat === 'hex') {
+			resolve(Buffer.from(arrayBuf).toString('hex'));
+		} else {
+			resolve(arrayBuf);
+		}
+	});
+	worker.on('error', reject);
+	worker.postMessage({algorithm, arrayBuf}, [arrayBuf]);
+});
 
 exports.sha1 = create('sha1');
 exports.sha256 = create('sha256');
