@@ -10,7 +10,7 @@
 		"url": "sindresorhus.com"
 	},
 	"engines": {
-		"node": ">=8"
+		"node": ">=10"
 	},
 	"scripts": {
 		"test": "xo && ava test.js && karmatic test-browser.js && tsd"
@@ -18,7 +18,8 @@
 	"files": [
 		"index.js",
 		"index.d.ts",
-		"browser.js"
+		"browser.js",
+		"thread.js"
 	],
 	"keywords": [
 		"crypto",

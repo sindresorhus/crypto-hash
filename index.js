@@ -1,36 +1,56 @@
 'use strict';
 const {Worker} = require('worker_threads');
 
-const create = algorithm => (buffer, options) => new Promise((resolve, reject) => {
+let worker; // Lazy
+let taskIdCounter = 0;
+const tasks = new Map();
+
+const taskWorker = (value, transferList) => new Promise(resolve => {
+	const id = taskIdCounter++;
+	tasks.set(id, resolve);
+	if (worker === undefined) {
+		worker = new Worker('./thread.js');
+		worker.on('message', msg => {
+			const task = tasks.get(msg.id);
+			tasks.delete(msg.id);
+			if (tasks.size === 0) {
+				worker.unref();
+			}
+
+			task(msg.value);
+		});
+		worker.on('error', err => {
+			// Any error here is effectively an equivalent of segfault, and have no scope, so we just throw it on callback level
+			throw err;
+		});
+	}
+
+	worker.postMessage({id, value}, transferList);
+});
+
+const create = algorithm => async (src, options) => {
 	options = {
 		outputFormat: 'hex',
 		...options
 	};
 
-	let arrayBuf;
-	if (typeof buffer === 'string') {
-		let buf = Buffer.from(buffer, 'utf8');
-		if(buf.byteOffset === 0 && buf.buffer.byteLength === buf.length) {
-			arrayBuf = buf.Buffer;
-		} else {
-			arrayBuf = new ArrayBuffer(buf.length);
-			buf.copy(Buffer.from(arrayBuf));
-		}
+	let buffer;
+	if (typeof src === 'string') {
+		// Saving one copy operation by writing string to buffer right away and then transfering buffer
+		buffer = new ArrayBuffer(Buffer.byteLength(src, 'utf8'));
+		Buffer.from(buffer).write(src, 'utf8');
 	} else {
-		arrayBuf = buffer.buffer.slice(0);
+		// Creating a copy of buffer at call time, will be transfered later
+		buffer = src.buffer.slice(0);
 	}
 
-	const worker = new Worker('./thread.js');
-	worker.on('message', arrayBuf => {
-		if(options.outputFormat === 'hex') {
-			resolve(Buffer.from(arrayBuf).toString('hex'));
-		} else {
-			resolve(arrayBuf);
-		}
-	});
-	worker.on('error', reject);
-	worker.postMessage({algorithm, arrayBuf}, [arrayBuf]);
-});
+	const res = await taskWorker({algorithm, buffer}, [buffer]);
+	if (options.outputFormat === 'hex') {
+		return Buffer.from(res).toString('hex');
+	}
+
+	return res;
+};
 
 exports.sha1 = create('sha1');
 exports.sha256 = create('sha256');
