@@ -5,24 +5,29 @@ let worker; // Lazy
 let taskIdCounter = 0;
 const tasks = new Map();
 
+const createWorker = () => {
+	worker = new Worker('./thread.js');
+	worker.on('message', message => {
+		const task = tasks.get(message.id);
+		tasks.delete(message.id);
+		if (tasks.size === 0) {
+			worker.unref();
+		}
+
+		task(message.value);
+	});
+	worker.on('error', err => {
+		// Any error here is effectively an equivalent of segfault and have no scope, so we just throw it on callback level
+		throw err;
+	});
+};
+
 const taskWorker = (value, transferList) => new Promise(resolve => {
 	const id = taskIdCounter++;
 	tasks.set(id, resolve);
-	if (worker === undefined) {
-		worker = new Worker('./thread.js');
-		worker.on('message', message => {
-			const task = tasks.get(message.id);
-			tasks.delete(message.id);
-			if (tasks.size === 0) {
-				worker.unref();
-			}
 
-			task(message.value);
-		});
-		worker.on('error', err => {
-			// Any error here is effectively an equivalent of segfault, and have no scope, so we just throw it on callback level
-			throw err;
-		});
+	if (worker === undefined) {
+		createWorker();
 	}
 
 	worker.postMessage({id, value}, transferList);
