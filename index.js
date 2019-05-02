@@ -1,13 +1,15 @@
 'use strict';
 const crypto = require('crypto');
 
-let Worker;
+const requireOptional = (name, defaultValue) => {
+	try {
+		return require(name);
+	} catch (error) {
+		return defaultValue;
+	}
+};
 
-try {
-	Worker = require('worker_threads').Worker;
-} catch (error) {
-	Worker = undefined;
-}
+const {Worker} = requireOptional('worker_threads', {});
 
 let worker; // Lazy
 let taskIdCounter = 0;

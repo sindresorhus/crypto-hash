@@ -1,6 +1,15 @@
 'use strict';
-const {parentPort} = require('worker_threads');
 const crypto = require('crypto');
+
+const requireOptional = (name, defaultValue) => {
+	try {
+		return require(name);
+	} catch (error) {
+		return defaultValue;
+	}
+};
+
+const {parentPort} = requireOptional('worker_threads', {});
 
 parentPort.on('message', message => {
 	const {algorithm, buffer} = message.value;
