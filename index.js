@@ -1,5 +1,13 @@
 'use strict';
-const {Worker} = require('worker_threads');
+const crypto = require('crypto');
+
+let Worker;
+
+try {
+	Worker = require('worker_threads').Worker;
+} catch (error) {
+	Worker = undefined;
+}
 
 let worker; // Lazy
 let taskIdCounter = 0;
@@ -33,29 +41,47 @@ const taskWorker = (value, transferList) => new Promise(resolve => {
 	worker.postMessage({id, value}, transferList);
 });
 
-const create = algorithm => async (src, options) => {
+let create = algorithm => async (buffer, options) => {
 	options = {
 		outputFormat: 'hex',
 		...options
 	};
 
-	let buffer;
-	if (typeof src === 'string') {
-		// Saving one copy operation by writing string to buffer right away and then transfering buffer
-		buffer = new ArrayBuffer(Buffer.byteLength(src, 'utf8'));
-		Buffer.from(buffer).write(src, 'utf8');
-	} else {
-		// Creating a copy of buffer at call time, will be transfered later
-		buffer = src.buffer.slice(0);
-	}
+	const hash = crypto.createHash(algorithm);
+	hash.update(buffer, typeof buffer === 'string' ? 'utf8' : undefined);
 
-	const res = await taskWorker({algorithm, buffer}, [buffer]);
 	if (options.outputFormat === 'hex') {
-		return Buffer.from(res).toString('hex');
+		return hash.digest('hex');
 	}
 
-	return res;
+	return hash.digest().buffer;
 };
+
+if (Worker !== undefined) {
+	create = algorithm => async (src, options) => {
+		options = {
+			outputFormat: 'hex',
+			...options
+		};
+
+		let buffer;
+		if (typeof src === 'string') {
+			// Saving one copy operation by writing string to buffer right away and then transfering buffer
+			buffer = new ArrayBuffer(Buffer.byteLength(src, 'utf8'));
+			Buffer.from(buffer).write(src, 'utf8');
+		} else {
+			// Creating a copy of buffer at call time, will be transfered later
+			buffer = src.buffer.slice(0);
+		}
+
+		const res = await taskWorker({algorithm, buffer}, [buffer]);
+		if (options.outputFormat === 'hex') {
+			return Buffer.from(res).toString('hex');
+		}
+
+		return res;
+	};
+}
 
 exports.sha1 = create('sha1');
 exports.sha256 = create('sha256');
