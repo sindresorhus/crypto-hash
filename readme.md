@@ -41,7 +41,7 @@ const {sha256} = require('crypto-hash');
 
 Returns a `Promise<string>` with a hex-encoded hash.
 
-*Note that even though it returns a promise, [in Node.js, the operation is synchronous 💩](https://github.com/nodejs/node/issues/678).*
+*In Node.js 12 or later, the operation is executed using [`worker_threads`](https://nodejs.org/api/worker_threads.html). A thread is lazily spawned on the first operation and lives until the end of the program execution. It's `unref`ed, so it won't keep the process alive.*
 
 [SHA-1 is insecure](https://stackoverflow.com/a/38045085/64949) and should not be used for anything sensitive.
 
