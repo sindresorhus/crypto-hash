@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const requireOptional = (name, defaultValue) => {
 	try {
 		return require(name);
-	} catch (error) {
+	} catch (_) {
 		return defaultValue;
 	}
 };
@@ -26,9 +26,10 @@ const createWorker = () => {
 
 		task(message.value);
 	});
-	worker.on('error', err => {
+
+	worker.on('error', error => {
 		// Any error here is effectively an equivalent of segfault and have no scope, so we just throw it on callback level
-		throw err;
+		throw error;
 	});
 };
 
