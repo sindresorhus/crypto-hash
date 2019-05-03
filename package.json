@@ -1,6 +1,6 @@
 {
 	"name": "crypto-hash",
-	"version": "1.1.0",
+	"version": "1.2.0",
 	"description": "Tiny hashing module that uses the native crypto API in Node.js and the browser",
 	"license": "MIT",
 	"repository": "sindresorhus/crypto-hash",
