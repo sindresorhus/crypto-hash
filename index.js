@@ -61,28 +61,28 @@ let create = algorithm => async (buffer, options) => {
 };
 
 if (Worker !== undefined) {
-	create = algorithm => async (src, options) => {
+	create = algorithm => async (source, options) => {
 		options = {
 			outputFormat: 'hex',
 			...options
 		};
 
 		let buffer;
-		if (typeof src === 'string') {
+		if (typeof source === 'string') {
 			// Saving one copy operation by writing string to buffer right away and then transfering buffer
-			buffer = new ArrayBuffer(Buffer.byteLength(src, 'utf8'));
-			Buffer.from(buffer).write(src, 'utf8');
+			buffer = new ArrayBuffer(Buffer.byteLength(source, 'utf8'));
+			Buffer.from(buffer).write(source, 'utf8');
 		} else {
 			// Creating a copy of buffer at call time, will be transfered later
-			buffer = src.buffer.slice(0);
+			buffer = source.buffer.slice(0);
 		}
 
-		const res = await taskWorker({algorithm, buffer}, [buffer]);
+		const result = await taskWorker({algorithm, buffer}, [buffer]);
 		if (options.outputFormat === 'hex') {
-			return Buffer.from(res).toString('hex');
+			return Buffer.from(result).toString('hex');
 		}
 
-		return res;
+		return result;
 	};
 }
 
