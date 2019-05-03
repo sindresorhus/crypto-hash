@@ -9,8 +9,6 @@ export interface OptionBufferOutput {
 /**
 [SHA-1 is insecure](https://stackoverflow.com/a/38045085/64949) and should not be used for anything sensitive.
 
-_Note that even though it returns a promise, [in Node.js, the operation is synchronous 💩](https://github.com/nodejs/node/issues/678)._
-
 @returns The hex-encoded hash.
 */
 export function sha1(
@@ -23,8 +21,6 @@ export function sha1(
 ): Promise<ArrayBuffer>;
 
 /**
-_Note that even though it returns a promise, [in Node.js, the operation is synchronous 💩](https://github.com/nodejs/node/issues/678)._
-
 @returns The hex-encoded hash.
 
 @example
@@ -47,8 +43,6 @@ export function sha256(
 ): Promise<ArrayBuffer>;
 
 /**
-_Note that even though it returns a promise, [in Node.js, the operation is synchronous 💩](https://github.com/nodejs/node/issues/678)._
-
 @returns The hex-encoded hash.
 */
 export function sha384(
@@ -61,8 +55,6 @@ export function sha384(
 ): Promise<ArrayBuffer>;
 
 /**
-_Note that even though it returns a promise, [in Node.js, the operation is synchronous 💩](https://github.com/nodejs/node/issues/678)._
-
 @returns The hex-encoded hash.
 */
 export function sha512(
