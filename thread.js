@@ -1,5 +1,4 @@
 'use strict';
-/* eslint-disable import/no-unresolved */
 const crypto = require('crypto');
 const {parentPort} = require('worker_threads');
 
