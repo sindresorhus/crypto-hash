@@ -1,6 +1,6 @@
 'use strict';
 const crypto = require('crypto');
-const {parentPort} = require('worker_threads'); // eslint-disable-line import/no-unresolved
+const {parentPort} = require('worker_threads'); // eslint-disable-line import/no-unresolved, eslint-comments/no-unused-disable
 
 parentPort.on('message', message => {
 	const {algorithm, buffer} = message.value;
