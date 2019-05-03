@@ -10,6 +10,3 @@ parentPort.on('message', message => {
 	// Transfering buffer here for consistency, but considering buffer size it might be faster to just leave it for copying, needs perf test
 	parentPort.postMessage({id: message.id, value: arrayBuffer}, [arrayBuffer]);
 });
-ight be faster to just leave it for copying, needs perf test
-	parentPort.postMessage({id: message.id, value: arrayBuffer}, [arrayBuffer]);
-});
