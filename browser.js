@@ -34,10 +34,7 @@ const create = algorithm => async (buffer, options) => {
 		buffer = new _globalThis.TextEncoder().encode(buffer);
 	}
 
-	options = {
-		outputFormat: 'hex',
-		...options
-	};
+	options = Object.assign({ outputFormat: 'hex' }, options);
 
 	const hash = await _globalThis.crypto.subtle.digest(algorithm, buffer);
 
