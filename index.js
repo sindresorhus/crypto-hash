@@ -41,6 +41,7 @@ const taskWorker = (value, transferList) => new Promise(resolve => {
 		createWorker();
 	}
 
+	worker.ref();
 	worker.postMessage({id, value}, transferList);
 });
 
