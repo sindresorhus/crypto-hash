@@ -15,10 +15,6 @@ The browser version is only ~300 bytes minified & gzipped.
 $ npm install crypto-hash
 ```
 
-<a href="https://www.patreon.com/sindresorhus">
-	<img src="https://c5.patreon.com/external/logo/become_a_patron_button@2x.png" width="160">
-</a>
-
 
 ## Usage
 
@@ -51,7 +47,7 @@ Type: `string` [`ArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/Java
 
 #### options
 
-Type: `Object`
+Type: `object`
 
 ##### outputFormat
 
@@ -65,8 +61,3 @@ Setting this to `buffer` makes it return an `ArrayBuffer` instead of a `string`.
 ## Related
 
 - [hasha](https://github.com/sindresorhus/hasha) - Hashing in Node.js made simple
-
-
-## License
-
-MIT © [Sindre Sorhus](https://sindresorhus.com)
