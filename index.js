@@ -1,5 +1,6 @@
 'use strict';
 const crypto = require('crypto');
+const path = require('path');
 
 const requireOptional = (name, defaultValue) => {
 	try {
@@ -11,12 +12,14 @@ const requireOptional = (name, defaultValue) => {
 
 const {Worker} = requireOptional('worker_threads', {});
 
+const threadFilePath = path.join(__dirname, 'thread.js');
+
 let worker; // Lazy
 let taskIdCounter = 0;
 const tasks = new Map();
 
 const createWorker = () => {
-	worker = new Worker('./thread.js');
+	worker = new Worker(threadFilePath);
 	worker.on('message', message => {
 		const task = tasks.get(message.id);
 		tasks.delete(message.id);
