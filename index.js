@@ -12,14 +12,14 @@ const requireOptional = (name, defaultValue) => {
 
 const {Worker} = requireOptional('worker_threads', {});
 
-const pathToThreadJs = path.join(__dirname, './thread.js');
+const threadFilePath = path.join(__dirname, 'thread.js');
 
 let worker; // Lazy
 let taskIdCounter = 0;
 const tasks = new Map();
 
 const createWorker = () => {
-	worker = new Worker(pathToThreadJs);
+	worker = new Worker(threadFilePath);
 	worker.on('message', message => {
 		const task = tasks.get(message.id);
 		tasks.delete(message.id);
