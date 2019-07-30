@@ -37,6 +37,7 @@
 	"devDependencies": {
 		"@sindresorhus/is": "^0.15.0",
 		"ava": "^1.4.1",
+		"crypto-js": "3.1.9-1",
 		"hash.js": "^1.1.5",
 		"karmatic": "1.0.7",
 		"tsd": "^0.7.2",
