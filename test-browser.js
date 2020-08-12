@@ -35,4 +35,3 @@ it('buffer output', async () => {
 	const result = await sha1('🦄', {outputFormat: 'buffer'});
 	expect(is(result)).toEqual('ArrayBuffer');
 });
-

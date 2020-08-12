@@ -1,4 +1,4 @@
-# crypto-hash [![Build Status](https://travis-ci.org/sindresorhus/crypto-hash.svg?branch=master)](https://travis-ci.org/sindresorhus/crypto-hash)
+# crypto-hash [![Build Status](https://travis-ci.com/sindresorhus/crypto-hash.svg?branch=master)](https://travis-ci.com/github/sindresorhus/crypto-hash)
 
 > Tiny hashing module that uses the native crypto API in Node.js and the browser
 
@@ -8,13 +8,11 @@ In Node.js it uses [`require('crypto')`](https://nodejs.org/api/crypto.html#cryp
 
 The browser version is only ~300 bytes minified & gzipped.
 
-
 ## Install
 
 ```
 $ npm install crypto-hash
 ```
-
 
 ## Usage
 
@@ -27,13 +25,12 @@ const {sha256} = require('crypto-hash');
 })();
 ```
 
-
 ## API
 
-### sha1(input, [options])
-### sha256(input, [options])
-### sha384(input, [options])
-### sha512(input, [options])
+### sha1(input, options?)
+### sha256(input, options?)
+### sha384(input, options?)
+### sha512(input, options?)
 
 Returns a `Promise<string>` with a hex-encoded hash.
 
@@ -51,12 +48,11 @@ Type: `object`
 
 ##### outputFormat
 
-Type: `string`<br>
-Values: `hex` `buffer`<br>
-Default: `hex`
+Type: `string`\
+Values: `'hex' | 'buffer'`\
+Default: `'hex'`
 
 Setting this to `buffer` makes it return an `ArrayBuffer` instead of a `string`.
-
 
 ## Related
 
