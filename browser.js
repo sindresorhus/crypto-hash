@@ -1,8 +1,13 @@
 /* eslint-env browser */
+/* global globalThis:readonly */
 'use strict';
 
 // Ponyfill for `globalThis`
 const _globalThis = (() => {
+	if (typeof globalThis !== 'undefined') {
+		return globalThis;
+	}
+
 	if (typeof self !== 'undefined') {
 		return self;
 	}
