@@ -1,4 +1,4 @@
-# crypto-hash [![Build Status](https://travis-ci.com/sindresorhus/crypto-hash.svg?branch=master)](https://travis-ci.com/github/sindresorhus/crypto-hash)
+# crypto-hash
 
 > Tiny hashing module that uses the native crypto API in Node.js and the browser
 
