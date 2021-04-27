@@ -10,6 +10,8 @@ The browser version is only ~300 bytes minified & gzipped.
 
 When used in the browser, it must be in a [secure context (HTTPS)](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/subtle).
 
+This package is more modern browsers. IE11 is not supported.
+
 ## Install
 
 ```
