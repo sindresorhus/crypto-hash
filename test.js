@@ -1,7 +1,8 @@
+import {Buffer} from 'node:buffer';
 import test from 'ava';
 import hashjs from 'hash.js';
 import is from '@sindresorhus/is';
-import {sha1, sha256, sha384, sha512} from '.';
+import {sha1, sha256, sha384, sha512} from './index.js';
 
 const fixture = 'foo bar baz';
 

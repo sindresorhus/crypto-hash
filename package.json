@@ -10,8 +10,13 @@
 		"email": "sindresorhus@gmail.com",
 		"url": "https://sindresorhus.com"
 	},
+	"type": "module",
+	"exports": {
+		"node": "./index.js",
+		"default": "./browser.js"
+	},
 	"engines": {
-		"node": ">=8"
+		"node": "^12.20.0 || ^14.13.1 || >=16.0.0"
 	},
 	"scripts": {
 		"test": "xo && ava test.js && karmatic test-browser.js && tsd"
@@ -20,6 +25,7 @@
 		"index.js",
 		"index.d.ts",
 		"browser.js",
+		"brower.d.ts",
 		"thread.js"
 	],
 	"keywords": [
@@ -36,17 +42,11 @@
 		"browser"
 	],
 	"devDependencies": {
-		"@sindresorhus/is": "^0.15.0",
-		"ava": "^1.4.1",
-		"hash.js": "^1.1.5",
-		"karmatic": "1.0.7",
-		"tsd": "^0.7.2",
-		"xo": "^0.24.0"
-	},
-	"browser": "browser.js",
-	"xo": {
-		"rules": {
-			"import/no-unresolved": "off"
-		}
+		"@sindresorhus/is": "^4.2.0",
+		"ava": "^3.15.0",
+		"hash.js": "^1.1.7",
+		"karmatic": "2.1.0",
+		"tsd": "^0.18.0",
+		"xo": "^0.45.0"
 	}
 }

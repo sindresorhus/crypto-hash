@@ -10,23 +10,21 @@ The browser version is only ~300 bytes minified & gzipped.
 
 When used in the browser, it must be in a [secure context (HTTPS)](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/subtle).
 
-This package is more modern browsers. IE11 is not supported.
+This package is for modern browsers. IE11 is not supported.
 
 ## Install
 
-```
-$ npm install crypto-hash
+```sh
+npm install crypto-hash
 ```
 
 ## Usage
 
 ```js
-const {sha256} = require('crypto-hash');
+import {sha256} from 'crypto-hash';
 
-(async () => {
-	console.log(await sha256('🦄'));
-	//=> '5df82936cbf0864be4b7ba801bee392457fde9e4'
-})();
+console.log(await sha256('🦄'));
+//=> '5df82936cbf0864be4b7ba801bee392457fde9e4'
 ```
 
 ## API
@@ -36,9 +34,9 @@ const {sha256} = require('crypto-hash');
 ### sha384(input, options?)
 ### sha512(input, options?)
 
-Returns a `Promise<string>` with a hex-encoded hash.
+Returns a `Promise<string>` with a Hex-encoded hash.
 
-*In Node.js 12 or later, the operation is executed using [`worker_threads`](https://nodejs.org/api/worker_threads.html). A thread is lazily spawned on the first operation and lives until the end of the program execution. It's `unref`ed, so it won't keep the process alive.*
+*In Node.js, the operation is executed using [`worker_threads`](https://nodejs.org/api/worker_threads.html). A thread is lazily spawned on the first operation and lives until the end of the program execution. It's `unref`ed, so it won't keep the process alive.*
 
 [SHA-1 is insecure](https://stackoverflow.com/a/38045085/64949) and should not be used for anything sensitive.
 

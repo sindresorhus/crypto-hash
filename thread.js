@@ -1,6 +1,6 @@
-'use strict';
-const crypto = require('crypto');
-const {parentPort} = require('worker_threads');
+import {Buffer} from 'node:buffer';
+import crypto from 'node:crypto';
+import {parentPort} from 'node:worker_threads';
 
 parentPort.on('message', message => {
 	const {algorithm, buffer} = message.value;

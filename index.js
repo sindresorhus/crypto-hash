@@ -1,18 +1,8 @@
-'use strict';
-const crypto = require('crypto');
-const path = require('path');
+import {Buffer} from 'node:buffer';
+import {Worker} from 'node:worker_threads';
+import crypto from 'node:crypto';
 
-const requireOptional = (name, defaultValue) => {
-	try {
-		return require(name);
-	} catch (_) {
-		return defaultValue;
-	}
-};
-
-const {Worker} = requireOptional('worker_threads', {});
-
-const threadFilePath = path.join(__dirname, 'thread.js');
+const threadFilePath = new URL('thread.js', import.meta.url);
 
 let worker; // Lazy
 let taskIdCounter = 0;
@@ -20,6 +10,7 @@ const tasks = new Map();
 
 const createWorker = () => {
 	worker = new Worker(threadFilePath);
+
 	worker.on('message', message => {
 		const task = tasks.get(message.id);
 		tasks.delete(message.id);
@@ -48,16 +39,11 @@ const taskWorker = (value, transferList) => new Promise(resolve => {
 	worker.postMessage({id, value}, transferList);
 });
 
-let create = algorithm => async (buffer, options) => {
-	options = {
-		outputFormat: 'hex',
-		...options
-	};
-
+let create = algorithm => async (buffer, {outputFormat = 'hex'} = {}) => {
 	const hash = crypto.createHash(algorithm);
 	hash.update(buffer, typeof buffer === 'string' ? 'utf8' : undefined);
 
-	if (options.outputFormat === 'hex') {
+	if (outputFormat === 'hex') {
 		return hash.digest('hex');
 	}
 
@@ -65,12 +51,7 @@ let create = algorithm => async (buffer, options) => {
 };
 
 if (Worker !== undefined) {
-	create = algorithm => async (source, options) => {
-		options = {
-			outputFormat: 'hex',
-			...options
-		};
-
+	create = algorithm => async (source, {outputFormat = 'hex'} = {}) => {
 		let buffer;
 		if (typeof source === 'string') {
 			// Saving one copy operation by writing string to buffer right away and then transfering buffer
@@ -80,11 +61,11 @@ if (Worker !== undefined) {
 			const finalSource = source instanceof ArrayBuffer ? new Uint8Array(source) : source;
 
 			// Creating a copy of buffer at call time, will be transfered later
-			buffer = finalSource.buffer.slice(0);
+			buffer = finalSource.buffer.slice(0); // eslint-disable-line unicorn/prefer-spread
 		}
 
 		const result = await taskWorker({algorithm, buffer}, [buffer]);
-		if (options.outputFormat === 'hex') {
+		if (outputFormat === 'hex') {
 			return Buffer.from(result).toString('hex');
 		}
 
@@ -92,7 +73,7 @@ if (Worker !== undefined) {
 	};
 }
 
-exports.sha1 = create('sha1');
-exports.sha256 = create('sha256');
-exports.sha384 = create('sha384');
-exports.sha512 = create('sha512');
+export const sha1 = create('sha1');
+export const sha256 = create('sha256');
+export const sha384 = create('sha384');
+export const sha512 = create('sha512');

@@ -1,8 +1,7 @@
 /* eslint-env jasmine */
-'use strict';
-const hashjs = require('hash.js');
-const is = require('@sindresorhus/is');
-const {sha1, sha256, sha384, sha512} = require('./browser');
+import hashjs from 'hash.js';
+import is from '@sindresorhus/is';
+import {sha1, sha256, sha384, sha512} from './browser.js';
 
 const fixture = 'foo bar baz';
 

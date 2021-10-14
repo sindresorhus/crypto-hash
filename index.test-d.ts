@@ -1,5 +1,5 @@
 import {expectType} from 'tsd';
-import {sha1, sha256, sha384, sha512} from '.';
+import {sha1, sha256, sha384, sha512} from './index.js';
 
 expectType<Promise<string>>(sha1('🦄'));
 expectType<Promise<ArrayBuffer>>(sha1('🦄', {outputFormat: 'buffer'}));
