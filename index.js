@@ -77,8 +77,10 @@ if (Worker !== undefined) {
 			buffer = new ArrayBuffer(Buffer.byteLength(source, 'utf8'));
 			Buffer.from(buffer).write(source, 'utf8');
 		} else {
+			const finalSource = source instanceof ArrayBuffer ? new Uint8Array(source) : source;
+
 			// Creating a copy of buffer at call time, will be transfered later
-			buffer = source.buffer.slice(0);
+			buffer = finalSource.buffer.slice(0);
 		}
 
 		const result = await taskWorker({algorithm, buffer}, [buffer]);

@@ -30,6 +30,13 @@ test('buffer input', async t => {
 	t.is(await sha1(fixture), '5b9ba303e3d8ef9e9d421085303cda49d64c79bf');
 });
 
+test('buffer input - ArrayBuffer', async t => {
+	const fixture = 'x';
+	const fixtureBuffer = new ArrayBuffer(Buffer.byteLength(fixture, 'utf8'));
+	Buffer.from(fixtureBuffer).write(fixture, 'utf8');
+	t.is(await sha1(fixture), await sha1(fixtureBuffer));
+});
+
 test('buffer output', async t => {
 	const result = await sha1('🦄', {outputFormat: 'buffer'});
 	t.is(is(result), 'ArrayBuffer');
