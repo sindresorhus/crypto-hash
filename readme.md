@@ -20,11 +20,20 @@ npm install crypto-hash
 
 ## Usage
 
+### Node.js
 ```js
 import {sha256} from 'crypto-hash';
 
 console.log(await sha256('🦄'));
-//=> '5df82936cbf0864be4b7ba801bee392457fde9e4'
+//=> '36bf255468003165652fe978eaaa8898e191664028475f83f506dabd95298efc'
+```
+
+### Browser
+```js
+import {sha256} from 'crypto-hash/browser';
+
+console.log(await sha256('🎸'));
+//=> '9c09c3e34429531ecae73444e2dc557c886078ffd05ba3aefae5dfe28255ec4e'
 ```
 
 ## API
