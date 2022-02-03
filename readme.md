@@ -24,7 +24,7 @@ npm install crypto-hash
 import {sha256} from 'crypto-hash';
 
 console.log(await sha256('🦄'));
-//=> '5df82936cbf0864be4b7ba801bee392457fde9e4'
+//=> '36bf255468003165652fe978eaaa8898e191664028475f83f506dabd95298efc'
 ```
 
 ## API
