@@ -2,8 +2,6 @@ import {Buffer} from 'node:buffer';
 import {Worker} from 'node:worker_threads';
 import crypto from 'node:crypto';
 
-
-
 let create = algorithm => async (buffer, {outputFormat = 'hex'} = {}) => {
 	const hash = crypto.createHash(algorithm);
 	hash.update(buffer, typeof buffer === 'string' ? 'utf8' : undefined);
