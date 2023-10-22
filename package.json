@@ -12,20 +12,21 @@
 	},
 	"type": "module",
 	"exports": {
+		"types": "./index.d.ts",
 		"node": "./index.js",
 		"default": "./browser.js"
 	},
 	"engines": {
-		"node": "^12.20.0 || ^14.13.1 || >=16.0.0"
+		"node": ">=18"
 	},
 	"scripts": {
-		"test": "xo && ava test.js && karmatic test-browser.js && tsd"
+		"//test": "xo && ava test.js && karmatic test-browser.js && tsd",
+		"test": "xo && ava test.js && tsd"
 	},
 	"files": [
 		"index.js",
 		"index.d.ts",
 		"browser.js",
-		"browser.d.ts",
 		"thread.js"
 	],
 	"keywords": [
@@ -42,11 +43,10 @@
 		"browser"
 	],
 	"devDependencies": {
-		"@sindresorhus/is": "^4.2.0",
-		"ava": "^3.15.0",
+		"@sindresorhus/is": "^6.0.1",
+		"ava": "^5.3.1",
 		"hash.js": "^1.1.7",
-		"karmatic": "2.1.0",
-		"tsd": "^0.18.0",
-		"xo": "^0.45.0"
+		"tsd": "^0.29.0",
+		"xo": "^0.56.0"
 	}
 }

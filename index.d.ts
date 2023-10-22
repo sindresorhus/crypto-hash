@@ -1,10 +1,10 @@
-export interface OptionsHexOutput {
+export type OptionsHexOutput = {
 	outputFormat?: 'hex';
-}
+};
 
-export interface OptionBufferOutput {
+export type OptionBufferOutput = {
 	outputFormat: 'buffer';
-}
+};
 
 /**
 [SHA-1 is insecure](https://stackoverflow.com/a/38045085/64949) and should not be used for anything sensitive.

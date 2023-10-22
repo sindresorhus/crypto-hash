@@ -4,13 +4,13 @@
 
 Useful when you want the same hashing API in all environments. My cat calls it *isomorphic*.
 
-In Node.js it uses [`require('crypto')`](https://nodejs.org/api/crypto.html#crypto_class_hash), while in the browser it uses [`window.crypto`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest).
+In Node.js it uses [`node:crypto`](https://nodejs.org/api/crypto.html#crypto_class_hash), while in the browser it uses [`window.crypto`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest).
 
 The browser version is only ~300 bytes minified & gzipped.
 
 When used in the browser, it must be in a [secure context (HTTPS)](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/subtle).
 
-This package is for modern browsers. IE11 is not supported.
+This package is for modern browsers. Internet Explorer is not supported.
 
 ## Install
 
