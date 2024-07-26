@@ -1,6 +1,16 @@
-import {Buffer} from 'node:buffer';
 import {Worker} from 'node:worker_threads';
 import crypto from 'node:crypto';
+
+const bufferToHex = buffer => {
+	const view = new DataView(buffer);
+
+	let hexCodes = '';
+	for (let index = 0; index < view.byteLength; index += 4) {
+		hexCodes += view.getUint32(index).toString(16).padStart(8, '0');
+	}
+
+	return hexCodes;
+};
 
 let create = algorithm => async (buffer, {outputFormat = 'hex'} = {}) => {
 	const hash = crypto.createHash(algorithm);
@@ -52,24 +62,11 @@ if (Worker !== undefined) {
 	});
 
 	create = algorithm => async (source, {outputFormat = 'hex'} = {}) => {
-		let buffer;
-		if (typeof source === 'string') {
-			// Saving one copy operation by writing string to buffer right away and then transfering buffer
-			buffer = new ArrayBuffer(Buffer.byteLength(source, 'utf8'));
-			Buffer.from(buffer).write(source, 'utf8');
-		} else {
-			const finalSource = source instanceof ArrayBuffer ? new Uint8Array(source) : source;
+		const {buffer} = typeof source === 'string' ? new TextEncoder().encode(source) : (source instanceof ArrayBuffer ? new Uint8Array(source) : source);
 
-			// Creating a copy of buffer at call time, will be transfered later
-			buffer = finalSource.buffer.slice(0); // eslint-disable-line unicorn/prefer-spread
-		}
+		const hash = await taskWorker({algorithm, buffer}, [buffer]);
 
-		const result = await taskWorker({algorithm, buffer}, [buffer]);
-		if (outputFormat === 'hex') {
-			return Buffer.from(result).toString('hex');
-		}
-
-		return result;
+		return outputFormat === 'hex' ? bufferToHex(hash) : hash;
 	};
 }
 

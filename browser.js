@@ -16,6 +16,7 @@ const create = algorithm => async (buffer, {outputFormat = 'hex'} = {}) => {
 		buffer = new globalThis.TextEncoder().encode(buffer);
 	}
 
+	// eslint-disable-next-line n/no-unsupported-features/node-builtins
 	const hash = await globalThis.crypto.subtle.digest(algorithm, buffer);
 
 	return outputFormat === 'hex' ? bufferToHex(hash) : hash;
