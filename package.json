@@ -27,7 +27,8 @@
 		"index.js",
 		"index.d.ts",
 		"browser.js",
-		"thread.js"
+		"thread.js",
+		"utilities.js"
 	],
 	"keywords": [
 		"crypto",
