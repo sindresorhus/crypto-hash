@@ -1,16 +1,6 @@
 import {Worker} from 'node:worker_threads';
 import crypto from 'node:crypto';
-
-const bufferToHex = buffer => {
-	const view = new DataView(buffer);
-
-	let hexCodes = '';
-	for (let index = 0; index < view.byteLength; index += 4) {
-		hexCodes += view.getUint32(index).toString(16).padStart(8, '0');
-	}
-
-	return hexCodes;
-};
+import {bufferToHex} from './utilities.js';
 
 let create = algorithm => async (buffer, {outputFormat = 'hex'} = {}) => {
 	const hash = crypto.createHash(algorithm);

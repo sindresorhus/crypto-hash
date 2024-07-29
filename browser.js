@@ -1,22 +1,10 @@
-/* eslint-env browser */
-
-const bufferToHex = buffer => {
-	const view = new DataView(buffer);
-
-	let hexCodes = '';
-	for (let index = 0; index < view.byteLength; index += 4) {
-		hexCodes += view.getUint32(index).toString(16).padStart(8, '0');
-	}
-
-	return hexCodes;
-};
+import {bufferToHex} from './utilities.js';
 
 const create = algorithm => async (buffer, {outputFormat = 'hex'} = {}) => {
 	if (typeof buffer === 'string') {
 		buffer = new globalThis.TextEncoder().encode(buffer);
 	}
 
-	// eslint-disable-next-line n/no-unsupported-features/node-builtins
 	const hash = await globalThis.crypto.subtle.digest(algorithm, buffer);
 
 	return outputFormat === 'hex' ? bufferToHex(hash) : hash;
