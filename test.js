@@ -1,8 +1,12 @@
-import {Buffer} from 'node:buffer';
 import test from 'ava';
 import hashjs from 'hash.js';
 import is from '@sindresorhus/is';
-import {sha1, sha256, sha384, sha512} from './index.js';
+import {
+	sha1,
+	sha256,
+	sha384,
+	sha512,
+} from './index.js';
 
 const fixture = 'foo bar baz';
 
@@ -33,8 +37,7 @@ test('buffer input', async t => {
 
 test('buffer input - ArrayBuffer', async t => {
 	const fixture = 'x';
-	const fixtureBuffer = new ArrayBuffer(Buffer.byteLength(fixture, 'utf8'));
-	Buffer.from(fixtureBuffer).write(fixture, 'utf8');
+	const fixtureBuffer = new TextEncoder().encode(fixture).buffer;
 	t.is(await sha1(fixture), await sha1(fixtureBuffer));
 });
 

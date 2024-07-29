@@ -1,7 +1,12 @@
 /* eslint-env jasmine */
 import hashjs from 'hash.js';
 import is from '@sindresorhus/is';
-import {sha1, sha256, sha384, sha512} from './browser.js';
+import {
+	sha1,
+	sha256,
+	sha384,
+	sha512,
+} from './browser.js';
 
 const fixture = 'foo bar baz';
 
