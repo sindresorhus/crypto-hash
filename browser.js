@@ -1,12 +1,8 @@
-import {bufferToHex} from './utilities.js';
+import {bufferToHex, toArrayBuffer} from './utilities.js';
 
 const create = algorithm => async (buffer, {outputFormat = 'hex'} = {}) => {
-	if (typeof buffer === 'string') {
-		buffer = new globalThis.TextEncoder().encode(buffer);
-	}
-
-	const hash = await globalThis.crypto.subtle.digest(algorithm, buffer);
-
+	const data = toArrayBuffer(buffer);
+	const hash = await globalThis.crypto.subtle.digest(algorithm, data);
 	return outputFormat === 'hex' ? bufferToHex(hash) : hash;
 };
 
