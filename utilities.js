@@ -48,17 +48,26 @@ export const toArrayBuffer = input => {
 	return view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength);
 };
 
+// Pre-computed hex lookup table for fast conversion
+const HEX_CHARS = '0123456789abcdef';
+const HEX_LUT = [];
+for (let index = 0; index < 256; index++) {
+	// eslint-disable-next-line no-bitwise
+	HEX_LUT[index] = HEX_CHARS[(index >>> 4) & 0xF] + HEX_CHARS[index & 0xF];
+}
+
 export const bufferToHex = buffer => {
 	// Fast path in Node.js
 	if (typeof Buffer !== 'undefined' && typeof Buffer.from === 'function') {
 		return Buffer.from(buffer).toString('hex');
 	}
 
-	// Browser fallback
+	// Browser fallback with optimized lookup table
 	const bytes = new Uint8Array(buffer);
 	let hex = '';
-	for (const byte of bytes) {
-		hex += byte.toString(16).padStart(2, '0');
+	// eslint-disable-next-line unicorn/no-for-loop -- Performance critical path
+	for (let index = 0; index < bytes.length; index++) {
+		hex += HEX_LUT[bytes[index]];
 	}
 
 	return hex;
