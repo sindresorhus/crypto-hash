@@ -28,7 +28,11 @@ if (Worker !== undefined) {
 	const tasks = new Map();
 
 	const createWorker = () => {
-		worker = new Worker(threadFilePath, {type: 'module'});
+		worker = new Worker(threadFilePath, {
+			type: 'module',
+			// Prevent inheriting `NODE_OPTIONS` and other env vars that could cause issues (e.g., instrumentation trying to bind to the same port).
+			env: {},
+		});
 
 		worker.on('message', message => {
 			const task = tasks.get(message.id);
