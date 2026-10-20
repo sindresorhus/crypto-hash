@@ -1,6 +1,7 @@
 import {Worker} from 'node:worker_threads';
 import crypto from 'node:crypto';
 import {bufferToHex, toWorkerBuffer} from './utilities.js';
+import {createWorkerPool} from './worker-pool.js';
 
 let create = algorithm => async (buffer, {outputFormat = 'hex'} = {}) => {
 	const hash = crypto.createHash(algorithm);
@@ -21,77 +22,14 @@ let create = algorithm => async (buffer, {outputFormat = 'hex'} = {}) => {
 };
 
 if (Worker !== undefined) {
-	const threadFilePath = new URL('thread.js', import.meta.url);
-
-	let worker; // Lazy
-	let taskIdCounter = 0;
-	const tasks = new Map();
-
-	const createWorker = () => {
-		worker = new Worker(threadFilePath, {
-			type: 'module',
-			// Prevent inheriting `NODE_OPTIONS` and other env vars that could cause issues (e.g., instrumentation trying to bind to the same port).
-			env: {},
-		});
-
-		worker.on('message', message => {
-			const task = tasks.get(message.id);
-			if (!task) {
-				return;
-			}
-
-			tasks.delete(message.id);
-			if (tasks.size === 0) {
-				worker.unref();
-			}
-
-			task.resolve(message.value);
-		});
-
-		worker.on('error', error => {
-			// Reject all pending promises and reset worker
-			for (const [, task] of tasks) {
-				task.reject(error);
-			}
-
-			tasks.clear();
-			worker = undefined;
-		});
-
-		worker.on('exit', code => {
-			if (tasks.size > 0) {
-				const error = new Error(`Hash worker exited early (code ${code})`);
-				for (const [, task] of tasks) {
-					task.reject(error);
-				}
-
-				tasks.clear();
-			}
-
-			worker = undefined;
-		});
-	};
-
-	const taskWorker = (value, transferList) => new Promise((resolve, reject) => {
-		const id = taskIdCounter++;
-		tasks.set(id, {resolve, reject});
-
-		if (worker === undefined) {
-			createWorker();
-		}
-
-		worker.ref();
-
-		// Transfer the fresh buffer for performance - it's safe since we created a copy
-		worker.postMessage({id, value}, transferList);
-	});
+	const pool = createWorkerPool(new URL('thread.js', import.meta.url));
 
 	create = algorithm => async (source, {outputFormat = 'hex'} = {}) => {
 		// Create a fresh buffer that's safe to transfer
 		const inputBuffer = toWorkerBuffer(source);
 
 		// Transfer the input buffer for zero-copy performance
-		const hash = await taskWorker({algorithm, buffer: inputBuffer}, [inputBuffer]);
+		const hash = await pool.run({algorithm, buffer: inputBuffer}, [inputBuffer]);
 
 		return outputFormat === 'hex' ? bufferToHex(hash) : hash;
 	};

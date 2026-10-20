@@ -1,8 +1,14 @@
-import {test} from 'node:test';
+import {test, after} from 'node:test';
 import assert from 'node:assert/strict';
 import {Buffer} from 'node:buffer';
+import {execFile} from 'node:child_process';
+import {writeFile, unlink} from 'node:fs/promises';
+import {randomUUID} from 'node:crypto';
+import process from 'node:process';
+import {tmpdir} from 'node:os';
 import hashjs from 'hash.js';
 import is from '@sindresorhus/is';
+import {createWorkerPool} from './worker-pool.js';
 import {
 	sha1,
 	sha256,
@@ -11,6 +17,67 @@ import {
 } from './index.js';
 
 const fixture = 'foo bar baz';
+const moduleUrl = import.meta.url;
+
+const writeTemporaryScript = async source => {
+	const file = new URL(`${randomUUID()}.mjs`, `file://${tmpdir()}/`);
+	await writeFile(file, source);
+	return file;
+};
+
+// A worker that can be told to throw, so the pool's failure handling can be exercised directly.
+const crashableWorkerUrl = await writeTemporaryScript(`
+	import {parentPort} from 'node:worker_threads';
+
+	parentPort.on('message', message => {
+		if (message.value.crash) {
+			throw new Error('Worker crashed on purpose');
+		}
+
+		parentPort.postMessage(message);
+	});
+`);
+
+after(async () => {
+	await unlink(crashableWorkerUrl);
+});
+
+// The hash worker is `unref`ed, so a process that is only hashing must exit on its own once the
+// work is done. Running the snippet in a child process is the only way to observe that.
+const runDetachedScript = async source => {
+	const file = await writeTemporaryScript(source);
+
+	try {
+		return await new Promise((resolve, reject) => {
+			const child = execFile(process.execPath, [file.pathname]);
+
+			let stdout = '';
+			let stderr = '';
+			child.stdout.on('data', chunk => {
+				stdout += chunk;
+			});
+
+			child.stderr.on('data', chunk => {
+				stderr += chunk;
+			});
+
+			child.on('error', reject);
+
+			const timeout = setTimeout(() => {
+				child.kill('SIGKILL');
+				reject(new Error(`The process did not exit on its own.\n${stdout}${stderr}`));
+			}, 10_000);
+
+			// `close` rather than `exit`, since `exit` can fire before the pipes have been drained
+			child.on('close', code => {
+				clearTimeout(timeout);
+				resolve({code, stdout, stderr});
+			});
+		});
+	} finally {
+		await unlink(file);
+	}
+};
 
 test('sha1 hashes strings', async () => {
 	assert.equal(await sha1('🦄'), '5df82936cbf0864be4b7ba801bee392457fde9e4');
@@ -207,4 +274,37 @@ test('produces digest output of the exact length', async () => {
 	const sha1View = new Uint8Array(sha1Buffer);
 	const hasNonZero = [...sha1View].some(byte => byte !== 0);
 	assert.ok(hasNonZero, 'Digest contains actual hash data');
+});
+
+test('a failed task does not keep the process alive', async () => {
+	const {code, stdout, stderr} = await runDetachedScript(`
+		import {sha1} from ${JSON.stringify(moduleUrl.replace('test.js', 'index.js'))};
+
+		try {
+			// A SharedArrayBuffer cannot be put in a transfer list, so postMessage throws.
+			await sha1(new Uint8Array(new SharedArrayBuffer(8)));
+		} catch {}
+
+		await sha1('still working');
+		console.log('done');
+	`);
+
+	assert.equal(stdout.trim(), 'done', stderr);
+	assert.equal(code, 0);
+});
+
+test('rejects non-transferable input and keeps hashing afterwards', async () => {
+	await assert.rejects(async () => sha1(new Uint8Array(new SharedArrayBuffer(8))), {name: 'DataCloneError'});
+	assert.equal(await sha1('after the failure'), '6b67a6c507b43044cbabc747cd5b0c55b7605aef');
+});
+
+test('a crashed worker does not take down the tasks of its replacement', async () => {
+	const pool = createWorkerPool(crashableWorkerUrl);
+
+	await assert.rejects(pool.run({crash: true}), {message: 'Worker crashed on purpose'});
+
+	// Started straight from the rejection, so the replacement worker is in place while the
+	// crashed one is still winding down and about to emit `exit`.
+	const replacement = pool.run(42);
+	assert.equal(await replacement, 42);
 });

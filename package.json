@@ -26,7 +26,8 @@
 		"browser.js",
 		"index.d.ts",
 		"thread.js",
-		"utilities.js"
+		"utilities.js",
+		"worker-pool.js"
 	],
 	"keywords": [
 		"crypto",
