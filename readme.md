@@ -6,7 +6,7 @@ Useful when you want the same hashing API in all environments. My cat calls it *
 
 In Node.js it uses [`node:crypto`](https://nodejs.org/api/crypto.html#crypto_class_hash), while in the browser it uses [`window.crypto`](https://developer.mozilla.org/en-US/docs/Web/API/SubtleCrypto/digest).
 
-The browser version is only ~300 bytes minified & gzipped.
+The browser version is about 650 bytes minified & gzipped.
 
 When used in the browser, it must be in a [secure context (HTTPS)](https://developer.mozilla.org/en-US/docs/Web/API/Crypto/subtle).
 
@@ -25,6 +25,9 @@ import {sha256} from 'crypto-hash';
 
 console.log(await sha256('🦄'));
 //=> '36bf255468003165652fe978eaaa8898e191664028475f83f506dabd95298efc'
+
+const digest = await sha256('🦄', {outputFormat: 'buffer'});
+//=> ArrayBuffer (32 bytes)
 ```
 
 ## API
@@ -36,13 +39,15 @@ console.log(await sha256('🦄'));
 
 Returns a `Promise<string>` with a Hex-encoded hash.
 
-*In Node.js, the operation is executed using [`worker_threads`](https://nodejs.org/api/worker_threads.html). A thread is lazily spawned on the first operation and lives until the end of the program execution. It's `unref`ed, so it won't keep the process alive.*
+*In Node.js, the operation is executed using [`worker_threads`](https://nodejs.org/api/worker_threads.html). A thread is lazily spawned on the first operation and reused from then on; if it ever exits, the next operation spawns a replacement. It is `unref`ed while no operation is in flight, so it will not keep the process alive.*
 
 [SHA-1 is insecure](https://stackoverflow.com/a/38045085/64949) and should not be used for anything sensitive.
 
 #### input
 
-Type: `string` [`ArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) [`ArrayBufferView`](https://developer.mozilla.org/en-US/docs/Web/API/ArrayBufferView)
+Type: `string` [`ArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer) [`SharedArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) [`ArrayBufferView`](https://developer.mozilla.org/en-US/docs/Web/API/ArrayBufferView)
+
+The input is always copied, so the buffer you pass in is never detached, and a view hashes only the range it covers. Anything else, including a detached buffer, rejects with a `TypeError`.
 
 #### options
 
@@ -54,7 +59,7 @@ Type: `string`\
 Values: `'hex' | 'buffer'`\
 Default: `'hex'`
 
-Setting this to `buffer` makes it return an `ArrayBuffer` instead of a `string`.
+Setting this to `buffer` makes it return an `ArrayBuffer` instead of a `string`. Any other value rejects with a `TypeError` rather than quietly returning one or the other.
 
 ## Related
 

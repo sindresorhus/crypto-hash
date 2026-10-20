@@ -17,7 +17,7 @@
 		"node": ">=22"
 	},
 	"scripts": {
-		"test:node": "xo && node --test test.js",
+		"test:node": "xo && node --test test.js test-fallback.js",
 		"test:browser": "npx playwright install chromium && npx playwright test",
 		"test": "npm run test:node && npm run test:browser"
 	},
@@ -44,9 +44,8 @@
 	],
 	"devDependencies": {
 		"@playwright/test": "^1.63.0",
-		"@sindresorhus/is": "^8.1.0",
-		"hash.js": "^1.1.7",
 		"serve": "^14.2.6",
+		"typescript": "^6.0.3",
 		"xo": "^5.0.1"
 	}
 }
