@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {Buffer} from 'node:buffer';
 import {execFile} from 'node:child_process';
 import {writeFile, unlink} from 'node:fs/promises';
-import {randomUUID} from 'node:crypto';
+import {randomUUID, createHash} from 'node:crypto';
 import process from 'node:process';
 import {tmpdir} from 'node:os';
 import hashjs from 'hash.js';
@@ -18,6 +18,8 @@ import {
 
 const fixture = 'foo bar baz';
 const moduleUrl = import.meta.url;
+const workerPoolUrl = new URL('worker-pool.js', moduleUrl).href;
+const threadUrl = new URL('thread.js', moduleUrl).href;
 
 const writeTemporaryScript = async source => {
 	const file = new URL(`${randomUUID()}.mjs`, `file://${tmpdir()}/`);
@@ -278,14 +280,18 @@ test('produces digest output of the exact length', async () => {
 
 test('a failed task does not keep the process alive', async () => {
 	const {code, stdout, stderr} = await runDetachedScript(`
-		import {sha1} from ${JSON.stringify(moduleUrl.replace('test.js', 'index.js'))};
+		import {createWorkerPool} from ${JSON.stringify(workerPoolUrl)};
+
+		const pool = createWorkerPool(new URL(${JSON.stringify(threadUrl)}));
 
 		try {
-			// A SharedArrayBuffer cannot be put in a transfer list, so postMessage throws.
-			await sha1(new Uint8Array(new SharedArrayBuffer(8)));
+			// A SharedArrayBuffer is not transferable, so postMessage throws.
+			const shared = new SharedArrayBuffer(8);
+			await pool.run({buffer: shared}, [shared]);
 		} catch {}
 
-		await sha1('still working');
+		const buffer = new TextEncoder().encode('still working').buffer;
+		await pool.run({algorithm: 'sha1', buffer}, [buffer]);
 		console.log('done');
 	`);
 
@@ -293,9 +299,12 @@ test('a failed task does not keep the process alive', async () => {
 	assert.equal(code, 0);
 });
 
-test('rejects non-transferable input and keeps hashing afterwards', async () => {
-	await assert.rejects(async () => sha1(new Uint8Array(new SharedArrayBuffer(8))), {name: 'DataCloneError'});
-	assert.equal(await sha1('after the failure'), '6b67a6c507b43044cbabc747cd5b0c55b7605aef');
+test('rejects a task that cannot be transferred and keeps the pool usable', async () => {
+	const pool = createWorkerPool(crashableWorkerUrl);
+	const shared = new SharedArrayBuffer(8);
+
+	await assert.rejects(pool.run({buffer: shared}, [shared]), {name: 'DataCloneError'});
+	assert.equal(await pool.run('after the failure'), 'after the failure');
 });
 
 test('a crashed worker does not take down the tasks of its replacement', async () => {
@@ -307,4 +316,187 @@ test('a crashed worker does not take down the tasks of its replacement', async (
 	// crashed one is still winding down and about to emit `exit`.
 	const replacement = pool.run(42);
 	assert.equal(await replacement, 42);
+});
+
+test('accepts a view backed by a SharedArrayBuffer', async () => {
+	const shared = new SharedArrayBuffer(8);
+	const view = new Uint8Array(shared);
+	view.set([1, 2, 3, 4, 5, 6, 7, 8]);
+
+	const expected = createHash('sha256').update(Buffer.from([1, 2, 3, 4, 5, 6, 7, 8])).digest('hex');
+
+	assert.equal(await sha256(view), expected);
+	assert.equal(await sha256(shared), expected);
+});
+
+test('accepts empty shared memory', async () => {
+	// `SharedArrayBuffer.prototype.slice` throws when the buffer it is called on is empty, so this
+	// needs a path that never slices one.
+	const emptyDigest = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+
+	const emptyShared = new SharedArrayBuffer(0);
+	assert.equal(await sha256(emptyShared), emptyDigest);
+	assert.equal(await sha256(new Uint8Array(emptyShared)), emptyDigest);
+	assert.equal(await sha256(new DataView(emptyShared)), emptyDigest);
+
+	// A view covering only part of a larger shared buffer, including the empty range at its end.
+	const shared = new SharedArrayBuffer(8);
+	new Uint8Array(shared).set([1, 2, 3, 4, 5, 6, 7, 8]);
+
+	assert.equal(await sha256(new Uint8Array(shared, 4)), createHash('sha256').update(Buffer.from([5, 6, 7, 8])).digest('hex'));
+	assert.equal(await sha256(new Uint8Array(shared, 8)), emptyDigest);
+});
+
+test('reports unsupported input instead of guessing at its bytes', async () => {
+	// A number used to be turned into a zero-filled view of that length and hashed, so it quietly
+	// produced a wrong answer rather than failing.
+	await assert.rejects(async () => sha256(123), {
+		name: 'TypeError',
+		message: 'Expected a string, an ArrayBuffer, or an ArrayBufferView, got Number',
+	});
+
+	await assert.rejects(async () => sha256([1, 2, 3]), {name: 'TypeError', message: 'Expected a string, an ArrayBuffer, or an ArrayBufferView, got Array'});
+	await assert.rejects(async () => sha256({}), {name: 'TypeError', message: 'Expected a string, an ArrayBuffer, or an ArrayBufferView, got Object'});
+	await assert.rejects(async () => sha256(null), {name: 'TypeError', message: 'Expected a string, an ArrayBuffer, or an ArrayBufferView, got object'});
+	await assert.rejects(async () => sha256(), {name: 'TypeError', message: 'Expected a string, an ArrayBuffer, or an ArrayBufferView, got undefined'});
+
+	// The pool stays usable after a rejected call.
+	assert.equal(await sha256('still working'), '00b7d7bed7e32d29197248bed5d1296ddcb1a2a7f2f23094fd4856b7e7295d97');
+});
+
+test('an object that merely looks like a buffer is rejected', async () => {
+	// The guard was meant to stop the constructor turning anything into a zero-filled view, but it
+	// only checked that `byteLength` was a number. `new Uint8Array({byteLength: 5})` runs ToIndex on
+	// the object, gets NaN, and yields an empty view, so these hashed as zero bytes.
+	const message = 'Expected a string, an ArrayBuffer, or an ArrayBufferView, got Object';
+
+	await assert.rejects(async () => sha256({byteLength: 5}), {name: 'TypeError', message});
+	await assert.rejects(async () => sha256({byteLength: 1024 * 1024}), {name: 'TypeError', message});
+	await assert.rejects(async () => sha256({byteLength: 8, byteOffset: 0}), {name: 'TypeError', message});
+	await assert.rejects(async () => sha256(new (class Fake {
+		get byteLength() {
+			return 7;
+		}
+	})()), {name: 'TypeError'});
+
+	// A null prototype leaves nothing to name the value by, so the type alone is reported
+	await assert.rejects(async () => sha256(Object.assign(Object.create(null), {byteLength: 9})), {
+		name: 'TypeError',
+		message: 'Expected a string, an ArrayBuffer, or an ArrayBufferView, got object',
+	});
+
+	// An object pretending to be a buffer through `Symbol.toStringTag` must not get through either
+	const tagged = {[Symbol.toStringTag]: 'ArrayBuffer', byteLength: 4};
+	await assert.rejects(async () => sha256(tagged), {name: 'TypeError'});
+});
+
+test('a SharedArrayBuffer subclass is accepted', async () => {
+	// A subclass carrying its own `byteOffset` property used to look like a view, fail the view
+	// check, and be rejected, even though it is a buffer.
+	class TaggedSharedArrayBuffer extends SharedArrayBuffer {
+		byteOffset = 0;
+	}
+
+	const shared = new TaggedSharedArrayBuffer(8);
+	new Uint8Array(shared).set([1, 2, 3, 4, 5, 6, 7, 8]);
+
+	const expected = createHash('sha256').update(Buffer.from([1, 2, 3, 4, 5, 6, 7, 8])).digest('hex');
+
+	assert.equal(await sha256(shared), expected);
+	assert.equal(await sha256(new Uint8Array(shared)), expected);
+	assert.equal(await sha256(new DataView(shared)), expected);
+});
+test('a buffer whose slice hands back itself is never detached', async () => {
+	// The transfer list detaches whatever it is given, so the copy handed to it must never be able
+	// to be the caller's own buffer.
+	class SelfSlicingBuffer extends ArrayBuffer {
+		slice() {
+			return this;
+		}
+	}
+
+	const buffer = new SelfSlicingBuffer(8);
+	new Uint8Array(buffer).set([1, 2, 3, 4, 5, 6, 7, 8]);
+
+	const expected = createHash('sha256').update(Buffer.from([1, 2, 3, 4, 5, 6, 7, 8])).digest('hex');
+	assert.equal(await sha256(buffer), expected);
+
+	assert.equal(buffer.byteLength, 8, 'The buffer the caller passed in is still usable');
+	assert.equal(new Uint8Array(buffer)[7], 8);
+	assert.equal(await sha256(buffer), expected, 'And it can still be hashed again');
+});
+
+test('names the type it was given, whatever it was', async () => {
+	// The constructor is reached before the type is checked, so a symbol or a detached buffer was
+	// reported by the constructor, in words that say nothing about what the caller passed.
+	await assert.rejects(async () => sha256(Symbol('x')), {
+		name: 'TypeError',
+		message: 'Expected a string, an ArrayBuffer, or an ArrayBufferView, got Symbol',
+	});
+
+	await assert.rejects(async () => sha256(10n), {name: 'TypeError', message: 'Expected a string, an ArrayBuffer, or an ArrayBufferView, got BigInt'});
+	await assert.rejects(async () => sha256(true), {name: 'TypeError', message: 'Expected a string, an ArrayBuffer, or an ArrayBufferView, got Boolean'});
+	await assert.rejects(async () => sha256(() => {}), {name: 'TypeError', message: 'Expected a string, an ArrayBuffer, or an ArrayBufferView, got Function'});
+});
+
+test('rejects an unknown output format instead of silently returning a buffer', async () => {
+	// Any value other than 'hex' used to take the buffer branch, so a typo handed back an
+	// ArrayBuffer where the caller expected a string and the mistake surfaced much later.
+	await assert.rejects(async () => sha256('x', {outputFormat: 'HEX'}), {
+		name: 'TypeError',
+		message: 'Expected outputFormat to be \'hex\' or \'buffer\', got "HEX"',
+	});
+
+	await assert.rejects(async () => sha256('x', {outputFormat: 'base64'}), {name: 'TypeError'});
+
+	assert.equal(typeof await sha256('x'), 'string');
+	assert.equal(typeof await sha256('x', {outputFormat: 'hex'}), 'string');
+	assert.ok((await sha256('x', {outputFormat: 'buffer'})) instanceof ArrayBuffer);
+
+	// The pool stays usable after a rejected call.
+	assert.equal(await sha256('still working'), '00b7d7bed7e32d29197248bed5d1296ddcb1a2a7f2f23094fd4856b7e7295d97');
+});
+test('a null options object is treated as no options', async () => {
+	// A destructured parameter default only covers `undefined`, so `null` died on a property
+	// access with a message that said nothing about which argument was wrong.
+	const expected = '11f6ad8ec52a2984abaafd7c3b516503785c2072';
+	assert.equal(await sha1('x', null), expected);
+	assert.equal(await sha1('x', undefined), expected);
+	assert.equal(await sha1('x', {}), expected);
+	assert.equal(await sha1('x'), expected);
+	assert.equal(await sha1('x', {outputFormat: 'hex'}), expected);
+});
+
+test('describes an unserializable outputFormat without throwing a different error', async () => {
+	// The message was built with JSON.stringify, which throws on a BigInt or a circular object, so
+	// the caller saw an error from the error path instead of the one describing their mistake.
+	const circular = {};
+	circular.self = circular;
+
+	await assert.rejects(async () => sha256('x', {outputFormat: 1n}), {
+		name: 'TypeError',
+		message: 'Expected outputFormat to be \'hex\' or \'buffer\', got BigInt',
+	});
+
+	await assert.rejects(async () => sha256('x', {outputFormat: circular}), {
+		name: 'TypeError',
+		message: 'Expected outputFormat to be \'hex\' or \'buffer\', got Object',
+	});
+});
+
+test('describes an outputFormat it cannot name', async () => {
+	// A null prototype leaves nothing to read a constructor name off, and String() on the value
+	// itself throws, so the caller got an error from the error path.
+	await assert.rejects(async () => sha256('x', {outputFormat: Object.create(null)}), {
+		name: 'TypeError',
+		message: 'Expected outputFormat to be \'hex\' or \'buffer\', got object',
+	});
+
+	await assert.rejects(async () => sha256('x', {outputFormat: null}), {
+		name: 'TypeError',
+		message: 'Expected outputFormat to be \'hex\' or \'buffer\', got object',
+	});
+
+	// An explicitly undefined option is still the default, not a mistake
+	assert.equal(typeof await sha256('x', {outputFormat: undefined}), 'string');
 });

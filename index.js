@@ -1,38 +1,25 @@
 import {Worker} from 'node:worker_threads';
 import crypto from 'node:crypto';
-import {bufferToHex, toWorkerBuffer} from './utilities.js';
+import {createHasher} from './utilities.js';
 import {createWorkerPool} from './worker-pool.js';
 
-let create = algorithm => async (buffer, {outputFormat = 'hex'} = {}) => {
+// Where the runtime provides no `Worker`, the digest runs in this process instead, so the entry point still works. `createHasher` gives it the same input contract, copying and output format as the worker path, and `test-fallback.js` pins it to `node:crypto` on the same inputs `test.js` pins the worker path to.
+const inProcess = algorithm => createHasher(buffer => {
 	const hash = crypto.createHash(algorithm);
-	if (typeof buffer === 'string') {
-		hash.update(buffer, 'utf8');
-	} else {
-		hash.update(buffer);
-	}
-
-	if (outputFormat === 'hex') {
-		return hash.digest('hex');
-	}
-
-	// Slice the exact digest bytes to avoid buffer slab issues
+	hash.update(new Uint8Array(buffer));
 	const digest = hash.digest();
 
+	// Slice the exact digest bytes to avoid buffer slab issues
 	return digest.buffer.slice(digest.byteOffset, digest.byteOffset + digest.byteLength);
-};
+});
+
+let create = inProcess;
 
 if (Worker !== undefined) {
 	const pool = createWorkerPool(new URL('thread.js', import.meta.url));
 
-	create = algorithm => async (source, {outputFormat = 'hex'} = {}) => {
-		// Create a fresh buffer that's safe to transfer
-		const inputBuffer = toWorkerBuffer(source);
-
-		// Transfer the input buffer for zero-copy performance
-		const hash = await pool.run({algorithm, buffer: inputBuffer}, [inputBuffer]);
-
-		return outputFormat === 'hex' ? bufferToHex(hash) : hash;
-	};
+	// `createHasher` copies the input first, so the buffer handed to the transfer list is ours to detach and never the caller's.
+	create = algorithm => createHasher(buffer => pool.run({algorithm, buffer}, [buffer]));
 }
 
 export const sha1 = create('sha1');

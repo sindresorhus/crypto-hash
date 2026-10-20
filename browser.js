@@ -1,10 +1,6 @@
-import {bufferToHex, toArrayBuffer} from './utilities.js';
+import {createHasher} from './utilities.js';
 
-const create = algorithm => async (buffer, {outputFormat = 'hex'} = {}) => {
-	const data = toArrayBuffer(buffer);
-	const hash = await crypto.subtle.digest(algorithm, data);
-	return outputFormat === 'hex' ? bufferToHex(hash) : hash;
-};
+const create = algorithm => createHasher(buffer => crypto.subtle.digest(algorithm, buffer));
 
 export const sha1 = create('SHA-1');
 export const sha256 = create('SHA-256');

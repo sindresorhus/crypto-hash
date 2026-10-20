@@ -4,7 +4,7 @@ import {parentPort} from 'node:worker_threads';
 parentPort.on('message', ({id, value: {algorithm, buffer}}) => {
 	const hash = crypto.createHash(algorithm);
 
-	// Use Uint8Array for clean, consistent handling
+	// `update` rejects a bare ArrayBuffer, so wrap the transferred bytes in a view
 	hash.update(new Uint8Array(buffer));
 	const digest = hash.digest(); // Buffer
 
