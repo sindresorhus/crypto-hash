@@ -5,11 +5,7 @@
 	"license": "MIT",
 	"repository": "sindresorhus/crypto-hash",
 	"funding": "https://github.com/sponsors/sindresorhus",
-	"author": {
-		"name": "Sindre Sorhus",
-		"email": "sindresorhus@gmail.com",
-		"url": "https://sindresorhus.com"
-	},
+	"author": "Sindre Sorhus <sindresorhus@gmail.com> (https://sindresorhus.com)",
 	"type": "module",
 	"exports": {
 		"types": "./index.d.ts",
@@ -18,17 +14,17 @@
 	},
 	"sideEffects": false,
 	"engines": {
-		"node": ">=20"
+		"node": ">=22"
 	},
 	"scripts": {
-		"test:node": "xo && ava test.js",
+		"test:node": "xo && node --test test.js",
 		"test:browser": "npx playwright install chromium && npx playwright test",
 		"test": "npm run test:node && npm run test:browser"
 	},
 	"files": [
 		"index.js",
-		"index.d.ts",
 		"browser.js",
+		"index.d.ts",
 		"thread.js",
 		"utilities.js"
 	],
@@ -46,11 +42,10 @@
 		"browser"
 	],
 	"devDependencies": {
-		"@playwright/test": "^1.55.0",
-		"@sindresorhus/is": "^7.0.2",
-		"ava": "^6.4.1",
+		"@playwright/test": "^1.63.0",
+		"@sindresorhus/is": "^8.1.0",
 		"hash.js": "^1.1.7",
-		"serve": "^14.2.5",
-		"xo": "^0.59.0"
+		"serve": "^14.2.6",
+		"xo": "^5.0.1"
 	}
 }

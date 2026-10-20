@@ -2,7 +2,7 @@ import {bufferToHex, toArrayBuffer} from './utilities.js';
 
 const create = algorithm => async (buffer, {outputFormat = 'hex'} = {}) => {
 	const data = toArrayBuffer(buffer);
-	const hash = await globalThis.crypto.subtle.digest(algorithm, data);
+	const hash = await crypto.subtle.digest(algorithm, data);
 	return outputFormat === 'hex' ? bufferToHex(hash) : hash;
 };
 

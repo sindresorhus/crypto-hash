@@ -1,4 +1,3 @@
-/* eslint-env browser */
 import {test, expect} from '@playwright/test';
 
 test.beforeEach(async ({page}) => {
@@ -7,21 +6,21 @@ test.beforeEach(async ({page}) => {
 		type: 'module',
 		content: `
 			import {sha1, sha256, sha384, sha512} from './browser.js';
-			window.sha1 = sha1;
-			window.sha256 = sha256;
-			window.sha384 = sha384;
-			window.sha512 = sha512;
+			globalThis.sha1 = sha1;
+			globalThis.sha256 = sha256;
+			globalThis.sha384 = sha384;
+			globalThis.sha512 = sha512;
 		`,
 	});
-	await page.waitForFunction(() => window.sha1 && window.sha256 && window.sha384 && window.sha512);
+	await page.waitForFunction(() => globalThis.sha1 && globalThis.sha256 && globalThis.sha384 && globalThis.sha512);
 });
 
 test('hash functions work correctly', async ({page}) => {
 	const results = await page.evaluate(async () => {
-		const sha1Result = await window.sha1('🦄');
-		const sha256Result = await window.sha256('🦄');
-		const sha384Result = await window.sha384('🦄');
-		const sha512Result = await window.sha512('🦄');
+		const sha1Result = await globalThis.sha1('🦄');
+		const sha256Result = await globalThis.sha256('🦄');
+		const sha384Result = await globalThis.sha384('🦄');
+		const sha512Result = await globalThis.sha512('🦄');
 
 		return {
 			sha1Result,
@@ -40,11 +39,11 @@ test('hash functions work correctly', async ({page}) => {
 test('accepts various input types', async ({page}) => {
 	const results = await page.evaluate(async () => {
 		// TypedArray
-		const uint16Result = await window.sha1(new Uint16Array([1, 2, 3]));
+		const uint16Result = await globalThis.sha1(new Uint16Array([1, 2, 3]));
 
 		// ArrayBuffer
 		const {buffer} = new TextEncoder().encode('test');
-		const bufferResult = await window.sha256(buffer);
+		const bufferResult = await globalThis.sha256(buffer);
 
 		// DataView
 		const dataViewBuffer = new ArrayBuffer(4);
@@ -53,7 +52,7 @@ test('accepts various input types', async ({page}) => {
 		view.setUint8(1, 2);
 		view.setUint8(2, 3);
 		view.setUint8(3, 4);
-		const dataViewResult = await window.sha1(view);
+		const dataViewResult = await globalThis.sha1(view);
 
 		return {uint16Result, bufferResult, dataViewResult};
 	});
@@ -65,7 +64,7 @@ test('accepts various input types', async ({page}) => {
 
 test('buffer output format', async ({page}) => {
 	const result = await page.evaluate(async () => {
-		const buffer = await window.sha1('🦄', {outputFormat: 'buffer'});
+		const buffer = await globalThis.sha1('🦄', {outputFormat: 'buffer'});
 		return buffer instanceof ArrayBuffer && buffer.byteLength === 20;
 	});
 	expect(result).toBe(true);
@@ -77,7 +76,7 @@ test('no ArrayBuffer detachment', async ({page}) => {
 		const view = new Uint8Array(buffer);
 		view[0] = 42;
 
-		await window.sha256(buffer);
+		await globalThis.sha256(buffer);
 
 		return buffer.byteLength === 16 && view[0] === 42;
 	});

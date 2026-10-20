@@ -27,7 +27,9 @@ export function sha1(input: string | BufferLike, options?: OptionsHexOutput): Pr
 export function sha1(input: string | BufferLike, options: OptionsBufferOutput): Promise<ArrayBuffer>;
 
 /**
-@returns The Hex-encoded hash.
+Hashes the input using SHA-256.
+
+@returns Hex-encoded hash by default, or an ArrayBuffer if `{outputFormat: 'buffer'}` is given.
 
 @example
 ```
@@ -41,7 +43,9 @@ export function sha256(input: string | BufferLike, options?: OptionsHexOutput): 
 export function sha256(input: string | BufferLike, options: OptionsBufferOutput): Promise<ArrayBuffer>;
 
 /**
-@returns The Hex-encoded hash.
+Hashes the input using SHA-384.
+
+@returns Hex-encoded hash by default, or an ArrayBuffer if `{outputFormat: 'buffer'}` is given.
 
 @example
 ```
@@ -55,7 +59,9 @@ export function sha384(input: string | BufferLike, options?: OptionsHexOutput): 
 export function sha384(input: string | BufferLike, options: OptionsBufferOutput): Promise<ArrayBuffer>;
 
 /**
-@returns The Hex-encoded hash.
+Hashes the input using SHA-512.
+
+@returns Hex-encoded hash by default, or an ArrayBuffer if `{outputFormat: 'buffer'}` is given.
 
 @example
 ```

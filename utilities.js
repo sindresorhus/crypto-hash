@@ -1,27 +1,21 @@
+/* eslint-disable n/prefer-global/buffer -- This module is shared with the browser build, which has no `node:buffer`. The Node fast paths below are guarded by a runtime check instead of an import. */
+
 // Creates a fresh buffer safe for transfer without detaching user's buffer
 export const toWorkerBuffer = input => {
 	if (typeof input === 'string') {
 		// Fresh buffer from encoding
-		return new globalThis.TextEncoder().encode(input).buffer;
+		return new TextEncoder().encode(input).buffer;
 	}
 
-	if (input instanceof ArrayBuffer) {
-		// Fresh copy - caller's buffer stays intact
-		// eslint-disable-next-line unicorn/prefer-spread -- ArrayBuffer.slice() is the correct method
-		return input.slice(0);
-	}
-
-	// TypedArray/DataView/Node Buffer
-	const isNodeBuffer = typeof Buffer !== 'undefined' && Buffer.isBuffer?.(input);
-	const view = isNodeBuffer ? new Uint8Array(input) : input;
-
-	// Fresh exact slice from the view's portion
-	return view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength);
+	// ArrayBuffer: fresh copy so the caller's buffer stays intact.
+	// TypedArray/DataView/Node Buffer: fresh exact slice from the view's portion.
+	// eslint-disable-next-line unicorn/prefer-spread -- ArrayBuffer.slice() is the correct method
+	return input instanceof ArrayBuffer ? input.slice(0) : input.buffer.slice(input.byteOffset, input.byteOffset + input.byteLength);
 };
 
 export const toArrayBuffer = input => {
 	if (typeof input === 'string') {
-		return new globalThis.TextEncoder().encode(input).buffer;
+		return new TextEncoder().encode(input).buffer;
 	}
 
 	if (input instanceof ArrayBuffer) {
@@ -30,22 +24,20 @@ export const toArrayBuffer = input => {
 		return input.slice();
 	}
 
-	// Handle Node.js Buffer and other ArrayBufferViews
-	const isNodeBuffer = typeof Buffer !== 'undefined' && Buffer.isBuffer?.(input);
-	const view = isNodeBuffer ? new Uint8Array(input) : input;
-
-	// For DataView, we need special handling since new Uint8Array(dataView) doesn't work
-	if (view instanceof DataView) {
-		const newBuffer = new ArrayBuffer(view.byteLength);
+	// For DataView, we need special handling since the view's buffer may be larger
+	// than the region the view actually covers
+	if (input instanceof DataView) {
+		const newBuffer = new ArrayBuffer(input.byteLength);
 		const newView = new Uint8Array(newBuffer);
-		for (let index = 0; index < view.byteLength; index++) {
-			newView[index] = view.getUint8(index);
+		for (let index = 0; index < input.byteLength; index++) {
+			newView[index] = input.getUint8(index);
 		}
 
 		return newBuffer;
 	}
 
-	return view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength);
+	// TypedArray/Node Buffer
+	return input.buffer.slice(input.byteOffset, input.byteOffset + input.byteLength);
 };
 
 // Pre-computed hex lookup table for fast conversion

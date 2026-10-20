@@ -36,14 +36,16 @@ if (Worker !== undefined) {
 
 		worker.on('message', message => {
 			const task = tasks.get(message.id);
-			if (task) {
-				tasks.delete(message.id);
-				if (tasks.size === 0) {
-					worker.unref();
-				}
-
-				task.resolve(message.value);
+			if (!task) {
+				return;
 			}
+
+			tasks.delete(message.id);
+			if (tasks.size === 0) {
+				worker.unref();
+			}
+
+			task.resolve(message.value);
 		});
 
 		worker.on('error', error => {
